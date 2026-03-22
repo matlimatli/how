@@ -3,7 +3,7 @@ set -e
 
 case "$1" in
     remove|purge)
-        for alias in what when why; do
+        for alias in when why; do
             rm -f /usr/bin/$alias
         done
         ;;

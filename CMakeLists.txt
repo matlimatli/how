@@ -126,7 +126,7 @@ install(TARGETS how RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES man/how.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 # Create symlinks for alternative command names
-foreach(alias what when why)
+foreach(alias when why)
     install(CODE "
         execute_process(
             COMMAND \${CMAKE_COMMAND} -E create_symlink how

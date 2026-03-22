@@ -3,7 +3,7 @@ set -e
 
 case "$1" in
     configure)
-        for alias in what when why; do
+        for alias in when why; do
             ln -sf how /usr/bin/$alias
         done
         ;;

@@ -5,9 +5,6 @@ how \- ask an LLM questions from the terminal
 .B how
 .RI [ question... ]
 .br
-.B what
-.RI [ question... ]
-.br
 .B when
 .RI [ question... ]
 .br
@@ -22,14 +19,13 @@ The command name forms the start of the query: running
 sends \(lqhow to list files\(rq to the configured LLM provider.
 .PP
 Symlinks
-.BR what ,
-.BR when ,
+.B when
 and
 .B why
 allow different question styles.
 For example,
-.B what is my ip
-sends \(lqwhat is my ip\(rq.
+.B why is the sky blue
+sends \(lqwhy is the sky blue\(rq.
 .PP
 The response is tailored to the user\(aqs operating system, shell, and working
 directory.
@@ -121,8 +117,8 @@ A diagnostic message is printed to standard error.
 .B how to find large files
 Ask how to find large files on this system.
 .TP
-.B what is the default gateway
-Ask what the default gateway is.
+.B why is the sky blue
+Ask why the sky is blue.
 .TP
 .B how in rust
 Short follow-up: repeat the previous question but for Rust.

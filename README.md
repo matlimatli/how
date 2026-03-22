@@ -17,7 +17,6 @@ git reset --soft HEAD~1
 The binary name becomes part of the query. Symlinks give you more question words:
 
 ```
-$ what is my ip address
 $ when was the berlin wall torn down
 $ why does the sky look red at sunset
 ```
@@ -32,7 +31,7 @@ cmake ..
 make
 ```
 
-Install system-wide (creates `what`, `when`, `why` symlinks too):
+Install system-wide (creates `when`, `why` symlinks too):
 
 ```sh
 sudo cmake --install build
