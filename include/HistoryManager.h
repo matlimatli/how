@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <optional>
+#include <string>
 #include <utility>
 
 struct Exchange {
@@ -10,7 +10,7 @@ struct Exchange {
 };
 
 class HistoryManager {
-public:
+  public:
     explicit HistoryManager(std::string path = "~/.cache/how/history");
 
     /// Load the previous exchange, if any.
@@ -19,8 +19,8 @@ public:
     /// Save the current exchange, creating the directory and enforcing 0600.
     void save(const std::string& userQuery, const std::string& assistantReply) const;
 
-private:
-    std::string resolvePath() const;
+  private:
+    [[nodiscard]] std::string resolvePath() const;
 
     std::string path_;
 };

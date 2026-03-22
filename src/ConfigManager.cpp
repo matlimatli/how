@@ -6,13 +6,12 @@
 #include <stdexcept>
 #include <sys/stat.h>
 
-ConfigManager::ConfigManager(std::string path)
-    : path_(std::move(path)) {}
+ConfigManager::ConfigManager(std::string path) : path_(std::move(path)) {}
 
 std::string ConfigManager::resolvePath(const std::string& path) const {
     if (path.starts_with("~/")) {
         const char* home = std::getenv("HOME");
-        if (!home) {
+        if (home == nullptr) {
             throw std::runtime_error("HOME environment variable is not set");
         }
         return std::string(home) + path.substr(1);
@@ -23,14 +22,23 @@ std::string ConfigManager::resolvePath(const std::string& path) const {
 void ConfigManager::checkPermissions(const std::string& resolved) const {
     struct stat st{};
     if (stat(resolved.c_str(), &st) != 0) {
-        throw std::runtime_error("Cannot stat config file: " + resolved);
+        throw std::runtime_error("Config file not found: " + resolved +
+                                 "\n"
+                                 "Create it with:\n\n"
+                                 "  mkdir -p ~/.config/how\n"
+                                 "  cat > ~/.config/how/config << 'EOF'\n"
+                                 "  default_provider = mistral\n"
+                                 "  mistral_api_key = YOUR_API_KEY\n"
+                                 "  EOF\n"
+                                 "  chmod 600 ~/.config/how/config\n\n"
+                                 "Replace YOUR_API_KEY with a key from your provider.\n"
+                                 "See the README for other providers and options.");
     }
 
-    mode_t perms = st.st_mode & 0777;
-    if (perms & ~static_cast<mode_t>(0600)) {
+    const mode_t perms = st.st_mode & 0777;
+    if ((perms & ~static_cast<mode_t>(0600)) != 0) {
         std::ostringstream msg;
-        msg << "Config file permissions are too open (0"
-            << std::oct << perms << "). "
+        msg << "Config file permissions are too open (0" << std::oct << perms << "). "
             << "Run: chmod 600 " << resolved;
         throw std::runtime_error(msg.str());
     }
@@ -103,7 +111,7 @@ std::string ConfigManager::customEndpoint() const {
 }
 
 bool ConfigManager::allowInsecureSsl() const {
-    auto val = get("allow_insecure_ssl", "false");
+    const auto val = get("allow_insecure_ssl", "false");
     return val == "true" || val == "1" || val == "yes";
 }
 

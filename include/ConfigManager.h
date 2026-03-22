@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 class ConfigManager {
-public:
+  public:
     explicit ConfigManager(std::string path = "~/.config/how/config");
 
     void load();
@@ -17,8 +17,8 @@ public:
     [[nodiscard]] bool allowInsecureSsl() const;
     [[nodiscard]] bool isLoaded() const;
 
-private:
-    std::string resolvePath(const std::string& path) const;
+  private:
+    [[nodiscard]] std::string resolvePath(const std::string& path) const;
     void checkPermissions(const std::string& resolved) const;
     void parseFile(const std::string& resolved);
     [[nodiscard]] std::string get(const std::string& key, const std::string& fallback = "") const;

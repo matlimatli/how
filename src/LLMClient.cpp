@@ -7,19 +7,18 @@ LLMClient::LLMClient(const Provider& provider, bool allowInsecureSsl)
     : provider_(provider), allowInsecureSsl_(allowInsecureSsl) {}
 
 size_t LLMClient::writeCallback(char* data, size_t size, size_t nmemb, std::string* out) {
-    size_t totalBytes = size * nmemb;
+    const size_t totalBytes = size * nmemb;
     out->append(data, totalBytes);
     return totalBytes;
 }
 
-std::string LLMClient::complete(
-    const std::string& systemPrompt,
-    const std::vector<Message>& messages) const {
+std::string LLMClient::complete(const std::string& systemPrompt,
+                                const std::vector<Message>& messages) const {
 
-    std::string body = provider_.formatRequest(systemPrompt, messages).dump();
+    const std::string body = provider_.formatRequest(systemPrompt, messages).dump();
 
     CURL* curl = curl_easy_init();
-    if (!curl) {
+    if (curl == nullptr) {
         throw std::runtime_error("Failed to initialize curl");
     }
 
@@ -46,7 +45,7 @@ std::string LLMClient::complete(
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     }
 
-    CURLcode res = curl_easy_perform(curl);
+    const CURLcode res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 
@@ -66,7 +65,7 @@ std::string LLMClient::complete(
     }
 
     if (json.contains("error")) {
-        std::string errMsg = json["error"].value("message", "Unknown API error");
+        const std::string errMsg = json["error"].value("message", "Unknown API error");
         throw std::runtime_error("API error: " + errMsg);
     }
 

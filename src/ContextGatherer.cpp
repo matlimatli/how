@@ -19,7 +19,7 @@ void ContextGatherer::gather() {
 
     try {
         workingDirectory_ = std::filesystem::current_path().string();
-    } catch (const std::filesystem::filesystem_error&) {
+    } catch (const std::filesystem::filesystem_error&) { // NOLINT(bugprone-empty-catch)
         // Keep default "unknown"
     }
 }

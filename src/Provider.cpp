@@ -3,43 +3,41 @@
 
 #include <stdexcept>
 
-Provider::Provider(std::string name, std::string endpoint, std::string apiKey,
-                   std::string model, Format format)
-    : name_(std::move(name)), endpoint_(std::move(endpoint)),
-      apiKey_(std::move(apiKey)), model_(std::move(model)), format_(format) {}
+Provider::Provider(std::string name, std::string endpoint, std::string apiKey, std::string model,
+                   Format format)
+    : name_(std::move(name)), endpoint_(std::move(endpoint)), apiKey_(std::move(apiKey)),
+      model_(std::move(model)), format_(format) {}
 
-Provider Provider::create(const std::string& name,
-                          const std::string& apiKey,
-                          const std::string& model,
-                          const std::string& customEndpoint) {
+Provider Provider::create(const std::string& name, const std::string& apiKey,
+                          const std::string& model, const std::string& customEndpoint) {
     if (name == "openai") {
-        return Provider(name, "https://api.openai.com/v1/chat/completions",
-                        apiKey, model.empty() ? "gpt-5.4-nano" : model, Format::OpenAI);
+        return Provider(name, "https://api.openai.com/v1/chat/completions", apiKey,
+                        model.empty() ? "gpt-5.4-nano" : model, Format::OpenAI);
     }
     if (name == "mistral") {
-        return Provider(name, "https://api.mistral.ai/v1/chat/completions",
-                        apiKey, model.empty() ? "mistral-small-latest" : model, Format::OpenAI);
+        return Provider(name, "https://api.mistral.ai/v1/chat/completions", apiKey,
+                        model.empty() ? "mistral-small-latest" : model, Format::OpenAI);
     }
     if (name == "anthropic") {
-        return Provider(name, "https://api.anthropic.com/v1/messages",
-                        apiKey, model.empty() ? "claude-haiku-4-5-20251001" : model, Format::Anthropic);
+        return Provider(name, "https://api.anthropic.com/v1/messages", apiKey,
+                        model.empty() ? "claude-haiku-4-5-20251001" : model, Format::Anthropic);
     }
     if (name == "google") {
-        std::string m = model.empty() ? "gemini-2.5-flash-lite" : model;
-        std::string ep = "https://generativelanguage.googleapis.com/v1beta/models/"
-                         + m + ":generateContent?key=" + apiKey;
+        const std::string m = model.empty() ? "gemini-2.5-flash-lite" : model;
+        const std::string ep = "https://generativelanguage.googleapis.com/v1beta/models/" + m +
+                               ":generateContent?key=" + apiKey;
         return Provider(name, ep, apiKey, m, Format::Google);
     }
     if (name == "custom") {
         if (customEndpoint.empty()) {
             throw std::runtime_error("custom provider requires custom_endpoint in config");
         }
-        return Provider(name, customEndpoint, apiKey,
-                        model.empty() ? "default" : model, Format::OpenAI);
+        return Provider(name, customEndpoint, apiKey, model.empty() ? "default" : model,
+                        Format::OpenAI);
     }
 
-    throw std::runtime_error("Unknown provider: " + name
-        + ". Valid providers: openai, anthropic, mistral, google, custom");
+    throw std::runtime_error("Unknown provider: " + name +
+                             ". Valid providers: openai, anthropic, mistral, google, custom");
 }
 
 std::string Provider::endpoint() const {
@@ -67,9 +65,8 @@ std::vector<std::string> Provider::headers() const {
     return hdrs;
 }
 
-nlohmann::json Provider::formatRequest(
-    const std::string& systemPrompt,
-    const std::vector<Message>& messages) const {
+nlohmann::json Provider::formatRequest(const std::string& systemPrompt,
+                                       const std::vector<Message>& messages) const {
 
     nlohmann::json payload;
 
@@ -89,16 +86,11 @@ nlohmann::json Provider::formatRequest(
             msgs.push_back({{"role", msg.role}, {"content", msg.content}});
         }
     } else if (format_ == Format::Google) {
-        payload["systemInstruction"] = {
-            {"parts", {{{"text", systemPrompt}}}}
-        };
+        payload["systemInstruction"] = {{"parts", {{{"text", systemPrompt}}}}};
         auto& contents = payload["contents"];
         for (const auto& msg : messages) {
             std::string role = (msg.role == "assistant") ? "model" : "user";
-            contents.push_back({
-                {"role", role},
-                {"parts", {{{"text", msg.content}}}}
-            });
+            contents.push_back({{"role", role}, {"parts", {{{"text", msg.content}}}}});
         }
     }
 
@@ -114,7 +106,13 @@ std::string Provider::parseResponse(const nlohmann::json& json) const {
             return json.at("content").at(0).at("text").get<std::string>();
         }
         if (format_ == Format::Google) {
-            return json.at("candidates").at(0).at("content").at("parts").at(0).at("text").get<std::string>();
+            return json.at("candidates")
+                .at(0)
+                .at("content")
+                .at("parts")
+                .at(0)
+                .at("text")
+                .get<std::string>();
         }
     } catch (const nlohmann::json::exception& e) {
         throw std::runtime_error(std::string("Unexpected response format: ") + e.what());

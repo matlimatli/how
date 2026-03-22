@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(SET CMP0135 NEW)
 project(HowUtility VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -30,8 +31,6 @@ endif()
 
 # Fetch dependencies (downloads may take a moment on first configure)
 include(FetchContent)
-set(FETCHCONTENT_QUIET OFF)
-
 message(STATUS "Fetching nlohmann/json 3.12.0...")
 set(JSON_Install OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(json
@@ -74,6 +73,46 @@ if(BUILD_TESTS)
 
     include(GoogleTest)
     gtest_discover_tests(how_tests)
+
+    # 'make test' rebuilds before running tests
+    add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        DEPENDS how_tests
+    )
+endif()
+
+# Optional clang-tidy target
+file(GLOB_RECURSE ALL_SOURCES src/*.cpp include/*.h)
+find_program(CLANG_TIDY clang-tidy
+    HINTS /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin)
+if(CLANG_TIDY)
+    # When using Homebrew clang-tidy with Apple Clang, pass the SDK path
+    set(CLANG_TIDY_EXTRA_ARGS "")
+    if(APPLE)
+        execute_process(COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE SDKROOT OUTPUT_STRIP_TRAILING_WHITESPACE)
+        set(CLANG_TIDY_EXTRA_ARGS "--extra-arg=-isysroot${SDKROOT}")
+    endif()
+    add_custom_target(tidy
+        COMMAND ${CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${CLANG_TIDY_EXTRA_ARGS} ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-tidy..."
+    )
+endif()
+
+# Optional clang-format target
+find_program(CLANG_FORMAT clang-format
+    HINTS /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin)
+if(CLANG_FORMAT)
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-format..."
+    )
+    add_custom_target(format-check
+        COMMAND ${CLANG_FORMAT} --dry-run --Werror ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Checking clang-format..."
+    )
 endif()
 
 # Install

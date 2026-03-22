@@ -3,7 +3,7 @@
 #include <string>
 
 class PromptBuilder {
-public:
+  public:
     void setQuery(const std::string& query);
     void setOS(const std::string& os);
     void setShell(const std::string& shell);
@@ -12,7 +12,7 @@ public:
     [[nodiscard]] std::string buildSystemPrompt() const;
     [[nodiscard]] std::string buildUserMessage() const;
 
-private:
+  private:
     std::string query_;
     std::string os_;
     std::string shell_;

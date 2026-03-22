@@ -12,7 +12,7 @@
 
 int main(int argc, char* argv[]) {
     // Build query from argv[0] command name + remaining arguments
-    std::string command = std::filesystem::path(argv[0]).filename().string();
+    const std::string command = std::filesystem::path(argv[0]).filename().string();
     std::ostringstream query;
     query << command;
     for (int i = 1; i < argc; ++i) {
@@ -33,39 +33,36 @@ int main(int argc, char* argv[]) {
     }
 
     // Resolve provider
-    std::string providerName = config.provider();
+    const std::string providerName = config.provider();
     Provider provider;
     try {
-        provider = Provider::create(
-            providerName,
-            config.apiKey(providerName),
-            config.model(providerName),
-            config.customEndpoint());
+        provider = Provider::create(providerName, config.apiKey(providerName),
+                                    config.model(providerName), config.customEndpoint());
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
 
     // Build the prompt
-    PromptBuilder prompt;
+    PromptBuilder prompt; // NOLINT(misc-const-correctness) - setters called below
     prompt.setQuery(query.str());
     prompt.setOS(context.os());
     prompt.setShell(context.shell());
     prompt.setWorkingDirectory(context.workingDirectory());
 
     // Assemble message history
-    HistoryManager history;
+    const HistoryManager history;
     std::vector<Message> messages;
 
     auto previous = history.loadPrevious();
     if (previous) {
-        messages.push_back({"user", previous->userQuery});
-        messages.push_back({"assistant", previous->assistantReply});
+        messages.push_back({.role = "user", .content = previous->userQuery});
+        messages.push_back({.role = "assistant", .content = previous->assistantReply});
     }
-    messages.push_back({"user", prompt.buildUserMessage()});
+    messages.push_back({.role = "user", .content = prompt.buildUserMessage()});
 
     // Send to LLM
-    LLMClient client(provider, config.allowInsecureSsl());
+    const LLMClient client(provider, config.allowInsecureSsl());
     std::string reply;
     try {
         reply = client.complete(prompt.buildSystemPrompt(), messages);

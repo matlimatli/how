@@ -3,17 +3,16 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <sys/stat.h>
-#include <nlohmann/json.hpp>
 
-HistoryManager::HistoryManager(std::string path)
-    : path_(std::move(path)) {}
+HistoryManager::HistoryManager(std::string path) : path_(std::move(path)) {}
 
 std::string HistoryManager::resolvePath() const {
     if (path_.starts_with("~/")) {
         const char* home = std::getenv("HOME");
-        if (!home) {
+        if (home == nullptr) {
             throw std::runtime_error("HOME environment variable is not set");
         }
         return std::string(home) + path_.substr(1);
@@ -31,10 +30,8 @@ std::optional<Exchange> HistoryManager::loadPrevious() const {
 
     try {
         auto json = nlohmann::json::parse(file);
-        return Exchange{
-            json.at("user").get<std::string>(),
-            json.at("assistant").get<std::string>()
-        };
+        return Exchange{.userQuery = json.at("user").get<std::string>(),
+                        .assistantReply = json.at("assistant").get<std::string>()};
     } catch (const nlohmann::json::exception&) {
         return std::nullopt;
     }
