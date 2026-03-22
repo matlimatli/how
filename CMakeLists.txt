@@ -24,6 +24,7 @@ add_executable(how
     src/PromptBuilder.cpp
     src/LLMClient.cpp
     src/HistoryManager.cpp
+    src/Provider.cpp
 )
 
 target_include_directories(how PRIVATE include)

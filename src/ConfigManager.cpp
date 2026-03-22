@@ -75,19 +75,31 @@ void ConfigManager::load() {
     loaded_ = true;
 }
 
-std::string ConfigManager::endpoint() const {
-    auto it = values_.find("endpoint");
-    return it != values_.end() ? it->second : "";
+std::string ConfigManager::get(const std::string& key, const std::string& fallback) const {
+    auto it = values_.find(key);
+    return it != values_.end() ? it->second : fallback;
 }
 
-std::string ConfigManager::apiKey() const {
-    auto it = values_.find("api_key");
-    return it != values_.end() ? it->second : "";
+std::string ConfigManager::provider() const {
+    if (const char* env = std::getenv("HOW_PROVIDER")) {
+        return env;
+    }
+    return get("default_provider", "openai");
 }
 
-std::string ConfigManager::model() const {
-    auto it = values_.find("model");
-    return it != values_.end() ? it->second : "gpt-4o-mini";
+std::string ConfigManager::apiKey(const std::string& provider) const {
+    return get(provider + "_api_key");
+}
+
+std::string ConfigManager::model(const std::string& provider) const {
+    if (const char* env = std::getenv("HOW_MODEL")) {
+        return env;
+    }
+    return get(provider + "_model");
+}
+
+std::string ConfigManager::customEndpoint() const {
+    return get("custom_endpoint");
 }
 
 bool ConfigManager::isLoaded() const {

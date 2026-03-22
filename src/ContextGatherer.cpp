@@ -8,6 +8,9 @@ void ContextGatherer::gather() {
     struct utsname info{};
     if (uname(&info) == 0) {
         os_ = info.sysname;
+        if (os_ == "Darwin") {
+            os_ = "macOS";
+        }
     }
 
     if (const char* shell = std::getenv("SHELL")) {

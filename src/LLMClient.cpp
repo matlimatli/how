@@ -3,8 +3,8 @@
 #include <curl/curl.h>
 #include <stdexcept>
 
-LLMClient::LLMClient(std::string endpoint, std::string apiKey, std::string model)
-    : endpoint_(std::move(endpoint)), apiKey_(std::move(apiKey)), model_(std::move(model)) {}
+LLMClient::LLMClient(const Provider& provider)
+    : provider_(provider) {}
 
 size_t LLMClient::writeCallback(char* data, size_t size, size_t nmemb, std::string* out) {
     size_t totalBytes = size * nmemb;
@@ -16,19 +16,8 @@ std::string LLMClient::complete(
     const std::string& systemPrompt,
     const std::vector<Message>& messages) const {
 
-    // Build the request payload
-    nlohmann::json payload;
-    payload["model"] = model_;
+    std::string body = provider_.formatRequest(systemPrompt, messages).dump();
 
-    auto& msgs = payload["messages"];
-    msgs.push_back({{"role", "system"}, {"content", systemPrompt}});
-    for (const auto& msg : messages) {
-        msgs.push_back({{"role", msg.role}, {"content", msg.content}});
-    }
-
-    std::string body = payload.dump();
-
-    // Set up curl
     CURL* curl = curl_easy_init();
     if (!curl) {
         throw std::runtime_error("Failed to initialize curl");
@@ -36,11 +25,12 @@ std::string LLMClient::complete(
 
     std::string response;
     struct curl_slist* headers = nullptr;
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    std::string authHeader = "Authorization: Bearer " + apiKey_;
-    headers = curl_slist_append(headers, authHeader.c_str());
+    for (const auto& hdr : provider_.headers()) {
+        headers = curl_slist_append(headers, hdr.c_str());
+    }
 
-    curl_easy_setopt(curl, CURLOPT_URL, endpoint_.c_str());
+    curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    curl_easy_setopt(curl, CURLOPT_URL, provider_.endpoint().c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
@@ -72,9 +62,5 @@ std::string LLMClient::complete(
         throw std::runtime_error("API error: " + errMsg);
     }
 
-    try {
-        return json.at("choices").at(0).at("message").at("content").get<std::string>();
-    } catch (const nlohmann::json::exception& e) {
-        throw std::runtime_error(std::string("Unexpected response format: ") + e.what());
-    }
+    return provider_.parseResponse(json);
 }

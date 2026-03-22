@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Provider.h"
+
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 
 struct Message {
     std::string role;
@@ -11,7 +12,7 @@ struct Message {
 
 class LLMClient {
 public:
-    LLMClient(std::string endpoint, std::string apiKey, std::string model);
+    explicit LLMClient(const Provider& provider);
 
     /// Send a chat completion request and return the assistant's reply.
     [[nodiscard]] std::string complete(
@@ -21,7 +22,5 @@ public:
 private:
     static size_t writeCallback(char* data, size_t size, size_t nmemb, std::string* out);
 
-    std::string endpoint_;
-    std::string apiKey_;
-    std::string model_;
+    const Provider& provider_;
 };

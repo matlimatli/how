@@ -3,6 +3,7 @@
 #include "HistoryManager.h"
 #include "LLMClient.h"
 #include "PromptBuilder.h"
+#include "Provider.h"
 
 #include <filesystem>
 #include <iostream>
@@ -31,6 +32,20 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Resolve provider
+    std::string providerName = config.provider();
+    Provider provider;
+    try {
+        provider = Provider::create(
+            providerName,
+            config.apiKey(providerName),
+            config.model(providerName),
+            config.customEndpoint());
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << '\n';
+        return 1;
+    }
+
     // Build the prompt
     PromptBuilder prompt;
     prompt.setQuery(query.str());
@@ -50,7 +65,7 @@ int main(int argc, char* argv[]) {
     messages.push_back({"user", prompt.buildUserMessage()});
 
     // Send to LLM
-    LLMClient client(config.endpoint(), config.apiKey(), config.model());
+    LLMClient client(provider);
     std::string reply;
     try {
         reply = client.complete(prompt.buildSystemPrompt(), messages);
@@ -65,7 +80,6 @@ int main(int argc, char* argv[]) {
     try {
         history.save(prompt.buildUserMessage(), reply);
     } catch (const std::runtime_error& e) {
-        // Non-fatal: warn but don't fail the whole command
         std::cerr << "Warning: " << e.what() << '\n';
     }
 
