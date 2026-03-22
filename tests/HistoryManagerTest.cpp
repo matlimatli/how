@@ -99,6 +99,57 @@ TEST_F(HistoryManagerTest, SaveCreatesParentDirectories) {
     EXPECT_EQ(result->userQuery, "query");
 }
 
+// --- Follow-up detection tests ---
+
+TEST(FollowUpTest, ExpiredHistoryReturnsFalse) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 1000};
+    // 20 minutes later
+    EXPECT_FALSE(HistoryManager::isFollowUp(ex, "how does photosynthesis work", 2200));
+}
+
+TEST(FollowUpTest, RecentHistoryAlwaysReturnsTrue) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 1000};
+    // 30 seconds later, unrelated query
+    EXPECT_TRUE(HistoryManager::isFollowUp(ex, "how does photosynthesis work", 1030));
+}
+
+TEST(FollowUpTest, MediumAgeWithSignalWordReturnsTrue) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 1000};
+    // 5 minutes later, "but" is a signal word
+    EXPECT_TRUE(HistoryManager::isFollowUp(ex, "how but only in the home directory", 1300));
+}
+
+TEST(FollowUpTest, MediumAgeWithShortQueryReturnsTrue) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 1000};
+    // 5 minutes later, short query (2 content words after command name)
+    EXPECT_TRUE(HistoryManager::isFollowUp(ex, "how in rust", 1300));
+}
+
+TEST(FollowUpTest, MediumAgeWithLongUnrelatedQueryReturnsFalse) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 1000};
+    // 5 minutes later, long query with no signal words
+    EXPECT_FALSE(HistoryManager::isFollowUp(ex, "how does photosynthesis work in plants", 1300));
+}
+
+TEST(FollowUpTest, ZeroTimestampReturnsFalse) {
+    Exchange ex{.userQuery = "how to list files",
+                .assistantReply = "Use ls",
+                .timestamp = 0};
+    EXPECT_FALSE(HistoryManager::isFollowUp(ex, "how in rust", std::time(nullptr)));
+}
+
+// --- Existing tests ---
+
 TEST_F(HistoryManagerTest, SaveProducesValidJson) {
     auto path = historyPath();
     HistoryManager mgr(path);

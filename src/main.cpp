@@ -54,8 +54,8 @@ int main(int argc, char* argv[]) {
     const HistoryManager history;
     std::vector<Message> messages;
 
-    auto previous = history.loadPrevious();
-    if (previous) {
+    const auto previous = history.loadPrevious();
+    if (previous && HistoryManager::isFollowUp(*previous, query.str())) {
         messages.push_back({.role = "user", .content = previous->userQuery});
         messages.push_back({.role = "assistant", .content = previous->assistantReply});
     }
