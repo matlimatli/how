@@ -20,6 +20,7 @@ find_package(CURL REQUIRED)
 
 # Fetch lightweight JavaScript Object Notation parser
 include(FetchContent)
+set(JSON_Install OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
     GIT_TAG v3.12.0
@@ -46,6 +47,7 @@ target_link_libraries(how PRIVATE how_core)
 option(BUILD_TESTS "Build unit tests" ON)
 if(BUILD_TESTS)
     enable_testing()
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
     FetchContent_Declare(googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG v1.17.0
@@ -62,4 +64,17 @@ if(BUILD_TESTS)
     gtest_discover_tests(how_tests)
 endif()
 
-# Note: After building, create symbolic links for 'what', 'when', 'who' pointing to 'how'.
+# Install
+include(GNUInstallDirs)
+install(TARGETS how RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Create symlinks for alternative command names
+foreach(alias what when why)
+    install(CODE "
+        execute_process(
+            COMMAND \${CMAKE_COMMAND} -E create_symlink how
+                \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${alias}
+        )
+        message(STATUS \"Symlink: ${alias} -> how\")
+    ")
+endforeach()

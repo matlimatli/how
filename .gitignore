@@ -1,3 +1,28 @@
+# Build
 build/
-.cache/
+cmake-build-*/
 compile_commands.json
+
+# C++ objects
+*.o
+*.a
+*.so
+*.dylib
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+_deps/
+
+# Cache
+.cache/
