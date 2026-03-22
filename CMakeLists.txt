@@ -21,6 +21,7 @@ add_executable(how
     src/main.cpp
     src/ConfigManager.cpp
     src/ContextGatherer.cpp
+    src/PromptBuilder.cpp
 )
 
 target_include_directories(how PRIVATE include)

@@ -1,5 +1,6 @@
 #include "ConfigManager.h"
 #include "ContextGatherer.h"
+#include "PromptBuilder.h"
 
 #include <filesystem>
 #include <iostream>
@@ -14,24 +15,28 @@ int main(int argc, char* argv[]) {
         query << ' ' << argv[i];
     }
 
-    std::cout << "Query: " << query.str() << '\n';
-
     // Gather system context
     ContextGatherer context;
     context.gather();
-    std::cout << "OS: " << context.os() << '\n';
-    std::cout << "Shell: " << context.shell() << '\n';
-    std::cout << "Directory: " << context.workingDirectory() << '\n';
 
     // Load configuration
     ConfigManager config;
     try {
         config.load();
-        std::cout << "Config: loaded (endpoint: " << config.endpoint() << ")\n";
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+
+    // Build the prompt that will be sent to the LLM
+    PromptBuilder prompt;
+    prompt.setQuery(query.str());
+    prompt.setOS(context.os());
+    prompt.setShell(context.shell());
+    prompt.setWorkingDirectory(context.workingDirectory());
+
+    std::cout << "=== System Prompt ===\n" << prompt.buildSystemPrompt() << "\n\n";
+    std::cout << "=== User Message ===\n" << prompt.buildUserMessage() << '\n';
 
     return 0;
 }
