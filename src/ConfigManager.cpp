@@ -102,6 +102,11 @@ std::string ConfigManager::customEndpoint() const {
     return get("custom_endpoint");
 }
 
+bool ConfigManager::allowInsecureSsl() const {
+    auto val = get("allow_insecure_ssl", "false");
+    return val == "true" || val == "1" || val == "yes";
+}
+
 bool ConfigManager::isLoaded() const {
     return loaded_;
 }

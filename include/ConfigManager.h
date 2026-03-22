@@ -14,6 +14,7 @@ public:
     [[nodiscard]] std::string apiKey(const std::string& provider) const;
     [[nodiscard]] std::string model(const std::string& provider) const;
     [[nodiscard]] std::string customEndpoint() const;
+    [[nodiscard]] bool allowInsecureSsl() const;
     [[nodiscard]] bool isLoaded() const;
 
 private:

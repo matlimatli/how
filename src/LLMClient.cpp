@@ -3,8 +3,8 @@
 #include <curl/curl.h>
 #include <stdexcept>
 
-LLMClient::LLMClient(const Provider& provider)
-    : provider_(provider) {}
+LLMClient::LLMClient(const Provider& provider, bool allowInsecureSsl)
+    : provider_(provider), allowInsecureSsl_(allowInsecureSsl) {}
 
 size_t LLMClient::writeCallback(char* data, size_t size, size_t nmemb, std::string* out) {
     size_t totalBytes = size * nmemb;
@@ -37,6 +37,14 @@ std::string LLMClient::complete(
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+
+    if (allowInsecureSsl_) {
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    } else {
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    }
 
     CURLcode res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
