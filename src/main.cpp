@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     messages.push_back({"user", prompt.buildUserMessage()});
 
     // Send to LLM
-    LLMClient client(config.endpoint(), config.apiKey());
+    LLMClient client(config.endpoint(), config.apiKey(), config.model());
     std::string reply;
     try {
         reply = client.complete(prompt.buildSystemPrompt(), messages);

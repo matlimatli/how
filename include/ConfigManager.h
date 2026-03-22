@@ -11,6 +11,7 @@ public:
 
     [[nodiscard]] std::string endpoint() const;
     [[nodiscard]] std::string apiKey() const;
+    [[nodiscard]] std::string model() const;
     [[nodiscard]] bool isLoaded() const;
 
 private:

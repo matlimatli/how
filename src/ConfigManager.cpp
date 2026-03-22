@@ -85,6 +85,11 @@ std::string ConfigManager::apiKey() const {
     return it != values_.end() ? it->second : "";
 }
 
+std::string ConfigManager::model() const {
+    auto it = values_.find("model");
+    return it != values_.end() ? it->second : "gpt-4o-mini";
+}
+
 bool ConfigManager::isLoaded() const {
     return loaded_;
 }

@@ -11,7 +11,7 @@ struct Message {
 
 class LLMClient {
 public:
-    LLMClient(std::string endpoint, std::string apiKey);
+    LLMClient(std::string endpoint, std::string apiKey, std::string model);
 
     /// Send a chat completion request and return the assistant's reply.
     [[nodiscard]] std::string complete(
@@ -23,4 +23,5 @@ private:
 
     std::string endpoint_;
     std::string apiKey_;
+    std::string model_;
 };

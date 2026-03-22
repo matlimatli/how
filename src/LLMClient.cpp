@@ -3,8 +3,8 @@
 #include <curl/curl.h>
 #include <stdexcept>
 
-LLMClient::LLMClient(std::string endpoint, std::string apiKey)
-    : endpoint_(std::move(endpoint)), apiKey_(std::move(apiKey)) {}
+LLMClient::LLMClient(std::string endpoint, std::string apiKey, std::string model)
+    : endpoint_(std::move(endpoint)), apiKey_(std::move(apiKey)), model_(std::move(model)) {}
 
 size_t LLMClient::writeCallback(char* data, size_t size, size_t nmemb, std::string* out) {
     size_t totalBytes = size * nmemb;
@@ -18,7 +18,7 @@ std::string LLMClient::complete(
 
     // Build the request payload
     nlohmann::json payload;
-    payload["model"] = "gpt-4o-mini";
+    payload["model"] = model_;
 
     auto& msgs = payload["messages"];
     msgs.push_back({{"role", "system"}, {"content", systemPrompt}});
