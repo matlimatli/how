@@ -16,14 +16,26 @@ if(USE_SANITIZERS)
 endif()
 
 # Find libcurl
-find_package(CURL REQUIRED)
+find_package(CURL QUIET)
+if(NOT CURL_FOUND)
+    message(FATAL_ERROR
+        "libcurl development headers not found.\n"
+        "Install them with:\n"
+        "  Ubuntu/Debian:  sudo apt install libcurl4-openssl-dev\n"
+        "  Fedora/RHEL:    sudo dnf install libcurl-devel\n"
+        "  macOS (Homebrew): brew install curl\n"
+        "  macOS (system):   usually pre-installed — try: xcode-select --install\n"
+    )
+endif()
 
-# Fetch lightweight JavaScript Object Notation parser
+# Fetch dependencies (downloads may take a moment on first configure)
 include(FetchContent)
+set(FETCHCONTENT_QUIET OFF)
+
+message(STATUS "Fetching nlohmann/json 3.12.0...")
 set(JSON_Install OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.12.0
+    URL https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz
 )
 FetchContent_MakeAvailable(json)
 
@@ -47,10 +59,10 @@ target_link_libraries(how PRIVATE how_core)
 option(BUILD_TESTS "Build unit tests" ON)
 if(BUILD_TESTS)
     enable_testing()
+    message(STATUS "Fetching googletest 1.17.0...")
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
     FetchContent_Declare(googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.17.0
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
     )
     FetchContent_MakeAvailable(googletest)
 
