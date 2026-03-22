@@ -117,7 +117,7 @@ how what time is it in Tokyo        # same result
 
 ## SBOM
 
-Third-party dependencies and their licenses are listed in [SBOM.md](SBOM.md). CI generates a machine-readable SPDX artifact as well.
+Third-party dependencies and their licenses are listed in [SBOM.md](SBOM.md). CI generates a machine-readable SPDX JSON artifact from [scripts/generate-sbom.py](scripts/generate-sbom.py).
 
 ## License
 
