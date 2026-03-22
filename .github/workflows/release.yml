@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install libcurl
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Package .deb
+        run: cd build && cpack -G DEB
+
+      - name: Create tarball
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          ARCH=$(uname -m)
+          STAGING="how-${VERSION}-linux-${ARCH}"
+          mkdir -p "${STAGING}/bin" "${STAGING}/share/man/man1"
+          cp build/how "${STAGING}/bin/"
+          ln -s how "${STAGING}/bin/what"
+          ln -s how "${STAGING}/bin/when"
+          ln -s how "${STAGING}/bin/why"
+          cp man/how.1 "${STAGING}/share/man/man1/"
+          cp packaging/INSTALL-linux.md "${STAGING}/INSTALL.md"
+          tar czf "${STAGING}.tar.gz" "${STAGING}"
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: build/*.deb
+
+      - name: Upload Linux tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-tarball
+          path: how-*.tar.gz
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Determine version and arch
+        id: meta
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          ARCH=$(uname -m)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "arch=$ARCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create tarball
+        run: |
+          VERSION=${{ steps.meta.outputs.version }}
+          ARCH=${{ steps.meta.outputs.arch }}
+          STAGING="how-${VERSION}-macos-${ARCH}"
+          mkdir -p "${STAGING}/bin" "${STAGING}/share/man/man1"
+          cp build/how "${STAGING}/bin/"
+          ln -s how "${STAGING}/bin/what"
+          ln -s how "${STAGING}/bin/when"
+          ln -s how "${STAGING}/bin/why"
+          cp man/how.1 "${STAGING}/share/man/man1/"
+          cp packaging/INSTALL-macos.md "${STAGING}/INSTALL.md"
+          tar czf "${STAGING}.tar.gz" "${STAGING}"
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-tarball
+          path: how-*.tar.gz
+
+  release:
+    needs: [ build-deb, build-macos ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" --clobber \
+              artifacts/deb-package/*.deb \
+              artifacts/linux-tarball/*.tar.gz \
+              artifacts/macos-tarball/*.tar.gz
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes \
+              artifacts/deb-package/*.deb \
+              artifacts/linux-tarball/*.tar.gz \
+              artifacts/macos-tarball/*.tar.gz
+          fi

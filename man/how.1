@@ -1,0 +1,143 @@
+.TH HOW 1 "2026-03-23" "how 1.0" "User Commands"
+.SH NAME
+how \- ask an LLM questions from the terminal
+.SH SYNOPSIS
+.B how
+.RI [ question... ]
+.br
+.B what
+.RI [ question... ]
+.br
+.B when
+.RI [ question... ]
+.br
+.B why
+.RI [ question... ]
+.SH DESCRIPTION
+.B how
+is a one-shot CLI utility that sends a question to a large language model and
+prints the answer.
+The command name forms the start of the query: running
+.B how to list files
+sends \(lqhow to list files\(rq to the configured LLM provider.
+.PP
+Symlinks
+.BR what ,
+.BR when ,
+and
+.B why
+allow different question styles.
+For example,
+.B what is my ip
+sends \(lqwhat is my ip\(rq.
+.PP
+The response is tailored to the user\(aqs operating system, shell, and working
+directory.
+Answers are concise and fit on a standard terminal screen.
+When a command is relevant, the LLM provides a brief explanation followed by the
+exact command(s).
+.SH CONFIGURATION
+.B how
+reads its configuration from
+.IR ~/.config/how/config .
+The file must have 0600 permissions.
+.PP
+The format is simple key=value pairs, one per line.
+Lines starting with
+.B #
+are comments.
+.SS Required keys
+.TP
+.B default_provider
+The LLM provider to use.
+Valid values:
+.BR openai ,
+.BR anthropic ,
+.BR mistral ,
+.BR google ,
+.BR custom .
+.TP
+.IB provider _api_key
+API key for the given provider (e.g.,
+.BR mistral_api_key ).
+.SS Optional keys
+.TP
+.IB provider _model
+Override the default model for a provider (e.g.,
+.BR openai_model ).
+.TP
+.B custom_endpoint
+URL for the custom provider (required when using
+.BR custom ).
+Compatible with OpenAI-format APIs such as Ollama and vLLM.
+.TP
+.B allow_insecure_ssl
+Set to
+.B true
+to disable SSL certificate verification.
+Intended for local LLM servers with self-signed certificates.
+.SS Example configuration
+.nf
+default_provider = mistral
+mistral_api_key = sk-...
+mistral_model = mistral-small-latest
+.fi
+.SH ENVIRONMENT
+.TP
+.B HOW_PROVIDER
+Override the configured default provider for this invocation.
+.TP
+.B HOW_MODEL
+Override the configured model for this invocation.
+.SH FOLLOW-UP DETECTION
+.B how
+caches the last exchange and automatically includes it as context when it
+detects a follow-up question:
+.IP \(bu 2
+Within 2 minutes: always treated as a follow-up.
+.IP \(bu 2
+2\(en10 minutes: treated as a follow-up if the query is short (3 words or
+fewer after the command name) or contains signal words like \(lqbut\(rq,
+\(lqalso\(rq, \(lqinstead\(rq, etc.
+.IP \(bu 2
+After 10 minutes: never treated as a follow-up.
+.SH FILES
+.TP
+.I ~/.config/how/config
+Configuration file (must be 0600).
+.TP
+.I ~/.cache/how/history
+Cached last exchange for follow-up detection.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error (missing config, network failure, invalid response, etc.).
+A diagnostic message is printed to standard error.
+.SH EXAMPLES
+.TP
+.B how to find large files
+Ask how to find large files on this system.
+.TP
+.B what is the default gateway
+Ask what the default gateway is.
+.TP
+.B how in rust
+Short follow-up: repeat the previous question but for Rust.
+.TP
+.B HOW_PROVIDER=anthropic how to list containers
+Use Anthropic for a single query.
+.SH NOTES
+The
+.B ?
+character is a shell glob.
+Quote it or omit it when asking questions:
+.PP
+.nf
+how "what is my ip?"    # quoted
+how what is my ip       # omit the question mark
+.fi
+.SH AUTHORS
+Mattias Lindblad

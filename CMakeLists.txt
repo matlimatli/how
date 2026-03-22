@@ -118,6 +118,7 @@ endif()
 # Install
 include(GNUInstallDirs)
 install(TARGETS how RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES man/how.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 # Create symlinks for alternative command names
 foreach(alias what when why)
@@ -129,3 +130,19 @@ foreach(alias what when why)
         message(STATUS \"Symlink: ${alias} -> how\")
     ")
 endforeach()
+
+# --- CPack packaging ---
+set(CPACK_PACKAGE_NAME "how")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Ask an LLM questions from the terminal")
+set(CPACK_PACKAGE_DESCRIPTION "A one-shot CLI utility that sends a question to a large language model and prints the answer. The command name forms the start of the query.")
+set(CPACK_PACKAGE_CONTACT "Mattias Lindblad")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/matlimatli/how")
+
+# Debian
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libcurl4")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
+    "${CMAKE_SOURCE_DIR}/packaging/postinst;${CMAKE_SOURCE_DIR}/packaging/postrm")
+
+include(CPack)
